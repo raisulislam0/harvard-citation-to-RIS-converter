@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Citation to RIS Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    textarea {
+      width: 80%;
+      height: 100px;
+      font-size: 16px;
+      padding: 10px;
+    }
+    button {
+      font-size: 16px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Citation to RIS Converter</h1>
+  <p>Enter your Harvard-style citation text below and click the button to download the RIS file.</p>
+  <textarea id="citation-text" placeholder="Enter your citation text here"></textarea>
+  <br><br>
+  <button onclick="convertAndDownload()">Convert and Download RIS</button>
+
+  <script>
+    function convertCitationToRIS(citationText) {
+      try {
+        // Regular expressions for different parts
+        const authorMatch = citationText.match(/^(.+?)(?:\s+\(|\s+no date)/);
+        const yearMatch = citationText.match(/\((\d{4})\)/) || ['no date'];
+        const titleMatch = citationText.match(/\) ([^,]+),|no date ([^,]+),/);
+        const journalMatch = citationText.match(/, ([^,]+?)\./);
+        const urlMatch = citationText.match(/Available at:\s*(https?:\/\/[^\s]+)/);
+        const accessDateMatch = citationText.match(/\(Accessed:\s*([^)]+)\)/);
+
+        // Extract data, or default if missing
+        const author = authorMatch ? authorMatch[1].trim() : "Unknown Author";
+        const year = yearMatch ? yearMatch[1] : "no date";
+        const title = titleMatch ? titleMatch[1] || titleMatch[2] : "Untitled";
+        const journal = journalMatch ? journalMatch[1].trim() : "Unknown Journal";
+        const url = urlMatch ? urlMatch[1] : "No URL";
+        const accessDate = accessDateMatch ? accessDateMatch[1].trim() : "";
+
+        // Construct RIS format
+        const risFormat = `
+TY  - JOUR
+AU  - ${author}
+PY  - ${year}
+TI  - ${title}
+JO  - ${journal}
+UR  - ${url}
+${accessDate ? "Y2  - " + accessDate : ""}
+ER  -`;
+
+        return risFormat.trim();
+      } catch (error) {
+        alert("Error processing the citation. Please ensure the format is close to Harvard style.");
+        console.error(error);
+        return null;
+      }
+    }
+
+    function convertAndDownload() {
+      const citationText = document.getElementById('citation-text').value;
+      const risOutput = convertCitationToRIS(citationText);
+
+      if (!risOutput) return; // Stop if RIS format generation failed
+
+      const blob = new Blob([risOutput], { type: 'application/x-research-info-systems' });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'citation.ris';
+      document.body.appendChild(link);
+      link.click();
+      URL.revokeObjectURL(url); // Clean up the URL
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
